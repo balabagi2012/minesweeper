@@ -11,6 +11,10 @@ function App() {
     row: number,
     col: number
   ): number => {
+    if (board[row][col].hasMine) {
+      return 0;
+    }
+
     let count = 0;
 
     const directions = [
@@ -18,7 +22,6 @@ function App() {
       [-1, 0],
       [-1, 1],
       [0, -1],
-      [0, 0],
       [0, 1],
       [1, -1],
       [1, 0],
@@ -29,18 +32,16 @@ function App() {
       const dir = directions[i];
       const newRow = row + dir[0];
       const newCol = col + dir[1];
-
       if (
         newRow >= 0 &&
-        newRow < board.length &&
+        newRow < 8 &&
         newCol >= 0 &&
-        newCol < board[0].length &&
+        newCol < 8 &&
         board[newRow][newCol].hasMine
       ) {
         count++;
       }
     }
-
     return count;
   };
 
@@ -57,9 +58,10 @@ function App() {
         })
       );
 
-    // 隨機地放置 10 個地雷
     for (let i = 0; i < 10; i++) {
-      let row, col;
+      let row;
+      let col;
+
       do {
         row = Math.floor(Math.random() * 8);
         col = Math.floor(Math.random() * 8);
@@ -69,22 +71,22 @@ function App() {
       );
 
       board[row][col] = {
+        ...board[row][col],
         hasMine: true,
-        isRevealed: false,
-        isFlagged: false,
-        numberOfNeighboringMines: 0,
       };
     }
 
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
-        board[row][col].numberOfNeighboringMines = countMinesAround(
-          board,
-          row,
-          col
-        );
+        if (!board[row][col].hasMine) {
+          board[row][col] = {
+            ...board[row][col],
+            numberOfNeighboringMines: countMinesAround(board, row, col),
+          };
+        }
       }
     }
+
     setBoard(board);
     setStatus(GameStatus.InProgress);
   };
@@ -97,7 +99,6 @@ function App() {
           <button onClick={() => setStatus(GameStatus.Initial)}>Reset</button>
         </div>
       </div>
-
       <div className="mx-auto flex flex-col items-center">
         {status === "loading" && <div>Loading...</div>}
         {status === GameStatus.Initial &&
@@ -114,21 +115,23 @@ function App() {
               ))}
             </div>
           ))}
-        {status === "inProgress" && (
-          <div>
-            <div>
-              {board?.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex flex-row">
-                  {row.map((cell, colIndex) => (
-                    <div key={colIndex} className="w-8 h-8 border">
-                      {cell.hasMine ? "💣" : cell.numberOfNeighboringMines}
-                    </div>
-                  ))}
+        {status === "inProgress" &&
+          Array.isArray(board) &&
+          board.map((row, rowIndex) => (
+            <div key={`row-${rowIndex}`} className="flex flex-row">
+              {row.map((cell, colIndex) => (
+                <div
+                  className="w-8 h-8 border"
+                  key={`row-${rowIndex}-col-${colIndex}`}
+                  onClick={() => {
+                    console.log(`row: ${rowIndex}, col: ${colIndex}`);
+                  }}
+                >
+                  {cell.hasMine ? "💣" : cell.numberOfNeighboringMines}
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ))}
       </div>
     </>
   );
