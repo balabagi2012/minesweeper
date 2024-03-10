@@ -95,6 +95,11 @@ function App() {
         })
       );
 
+    board[safeCell.row][safeCell.col] = {
+      ...board[safeCell.row][safeCell.col],
+      isRevealed: true,
+    };
+
     for (let i = 0; i < 10; i++) {
       let row;
       let col;
@@ -106,7 +111,6 @@ function App() {
         board[row][col].hasMine ||
         (row === safeCell.row && col === safeCell.col)
       );
-
       board[row][col] = {
         ...board[row][col],
         hasMine: true,
