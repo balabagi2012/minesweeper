@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import "./App.css";
 import { Coordinate, GameBoard, GameStatus } from "./types";
 
@@ -44,6 +44,30 @@ function App() {
     }
     return count;
   };
+
+  const revealCell = useCallback(
+    (board: GameBoard, row: number, col: number): void => {
+      const newBoard = [...board];
+      newBoard[row][col] = {
+        ...newBoard[row][col],
+        isRevealed: true,
+      };
+      setBoard(newBoard);
+    },
+    []
+  );
+
+  const flagCell = useCallback(
+    (board: GameBoard, row: number, col: number): void => {
+      const newBoard = [...board];
+      newBoard[row][col] = {
+        ...newBoard[row][col],
+        isFlagged: !newBoard[row][col].isFlagged,
+      };
+      setBoard(newBoard);
+    },
+    []
+  );
 
   const initializeGameBoard = (safeCell: Coordinate): void => {
     setStatus(GameStatus.Loading);
@@ -121,13 +145,38 @@ function App() {
             <div key={`row-${rowIndex}`} className="flex flex-row">
               {row.map((cell, colIndex) => (
                 <div
-                  className="w-8 h-8 border"
+                  className="w-8 h-8 border select-none"
                   key={`row-${rowIndex}-col-${colIndex}`}
-                  onClick={() => {
-                    console.log(`row: ${rowIndex}, col: ${colIndex}`);
+                  onClick={(event) => {
+                    event.preventDefault();
+                    if (!cell.isFlagged && !cell.isRevealed) {
+                      console.log(
+                        `Left click on row: ${rowIndex}, col: ${colIndex}`
+                      );
+                      revealCell(board, rowIndex, colIndex);
+                    }
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    console.log(
+                      `Right click on row: ${rowIndex}, col: ${colIndex}`
+                    );
+                    flagCell(board, rowIndex, colIndex);
+                  }}
+                  onDoubleClick={(event) => {
+                    event.preventDefault();
+                    console.log(
+                      `Double click on row: ${rowIndex}, col: ${colIndex}`
+                    );
                   }}
                 >
-                  {cell.hasMine ? "💣" : cell.numberOfNeighboringMines}
+                  {cell.isFlagged
+                    ? "🚩"
+                    : cell.isRevealed
+                    ? cell.hasMine
+                      ? "💣"
+                      : cell.numberOfNeighboringMines
+                    : "❓"}
                 </div>
               ))}
             </div>
