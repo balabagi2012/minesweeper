@@ -5,6 +5,7 @@ import { Coordinate, GameBoard, GameStatus } from "./types";
 function App() {
   const [board, setBoard] = useState<GameBoard>();
   const [status, setStatus] = useState<GameStatus>(GameStatus.Initial);
+  const [flagCount, setFlagCount] = useState(0);
 
   const countMinesAround = (
     board: GameBoard,
@@ -60,13 +61,25 @@ function App() {
   const flagCell = useCallback(
     (board: GameBoard, row: number, col: number): void => {
       const newBoard = [...board];
+      const newIsFlagged = !newBoard[row][col].isFlagged;
+      if (newIsFlagged && flagCount < 10) {
+        setFlagCount(
+          (prevCount) => prevCount + (newBoard[row][col].isFlagged ? 1 : -1)
+        );
+      } else if (!newIsFlagged && flagCount > 0) {
+        setFlagCount(
+          (prevCount) => prevCount + (newBoard[row][col].isFlagged ? 1 : -1)
+        );
+      } else {
+        return;
+      }
       newBoard[row][col] = {
         ...newBoard[row][col],
         isFlagged: !newBoard[row][col].isFlagged,
       };
       setBoard(newBoard);
     },
-    []
+    [flagCount]
   );
 
   const initializeGameBoard = (safeCell: Coordinate): void => {
@@ -114,6 +127,38 @@ function App() {
     setBoard(board);
     setStatus(GameStatus.InProgress);
   };
+
+  const revealSurroundingCells = useCallback(
+    (board: GameBoard, row: number, col: number): void => {
+      const directions = [
+        [-1, -1],
+        [-1, 0],
+        [-1, 1],
+        [0, -1],
+        [0, 1],
+        [1, -1],
+        [1, 0],
+        [1, 1],
+      ];
+
+      for (let i = 0; i < directions.length; i++) {
+        const dir = directions[i];
+        const newRow = row + dir[0];
+        const newCol = col + dir[1];
+        if (
+          newRow >= 0 &&
+          newRow < 8 &&
+          newCol >= 0 &&
+          newCol < 8 &&
+          !board[newRow][newCol].isRevealed &&
+          !board[newRow][newCol].isFlagged
+        ) {
+          revealCell(board, newRow, newCol);
+        }
+      }
+    },
+    [revealCell]
+  );
 
   return (
     <>
@@ -165,9 +210,12 @@ function App() {
                   }}
                   onDoubleClick={(event) => {
                     event.preventDefault();
-                    console.log(
-                      `Double click on row: ${rowIndex}, col: ${colIndex}`
-                    );
+                    if (!cell.isFlagged && cell.isRevealed) {
+                      console.log(
+                        `Double click on row: ${rowIndex}, col: ${colIndex}`
+                      );
+                      revealSurroundingCells(board, rowIndex, colIndex);
+                    }
                   }}
                 >
                   {cell.isFlagged
