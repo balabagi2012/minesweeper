@@ -7,6 +7,12 @@ function App() {
   const [status, setStatus] = useState<GameStatus>(GameStatus.Initial);
   const [flagCount, setFlagCount] = useState(0);
 
+  const resetGame = () => {
+    setBoard(undefined);
+    setStatus(GameStatus.Initial);
+    setFlagCount(0);
+  };
+
   const countMinesAround = (
     board: GameBoard,
     row: number,
@@ -57,7 +63,15 @@ function App() {
         ...newBoard[row][col],
         isRevealed: true,
       };
-      if (board[row][col].numberOfNeighboringMines === 0) {
+
+      if (newBoard[row][col].hasMine) {
+        setStatus(GameStatus.Lost);
+      }
+
+      if (
+        board[row][col].numberOfNeighboringMines === 0 &&
+        !board[row][col].hasMine
+      ) {
         const directions = [
           [-1, -1],
           [-1, 0],
@@ -86,6 +100,12 @@ function App() {
         }
       } else {
         setBoard(newBoard);
+        const isWon = newBoard.every((row) =>
+          row.every((cell) => cell.isRevealed || cell.hasMine)
+        );
+        if (isWon) {
+          setStatus(GameStatus.Won);
+        }
       }
     },
     []
@@ -94,15 +114,12 @@ function App() {
   const flagCell = useCallback(
     (board: GameBoard, row: number, col: number): void => {
       const newBoard = [...board];
-      const newIsFlagged = !newBoard[row][col].isFlagged;
+      const newIsFlagged = !board[row][col].isFlagged;
+      const newIsFlaggedCount = newIsFlagged ? 1 : -1;
       if (newIsFlagged && flagCount < 10) {
-        setFlagCount(
-          (prevCount) => prevCount + (newBoard[row][col].isFlagged ? 1 : -1)
-        );
+        setFlagCount(flagCount + newIsFlaggedCount);
       } else if (!newIsFlagged && flagCount > 0) {
-        setFlagCount(
-          (prevCount) => prevCount + (newBoard[row][col].isFlagged ? 1 : -1)
-        );
+        setFlagCount(flagCount + newIsFlaggedCount);
       } else {
         return;
       }
@@ -127,11 +144,6 @@ function App() {
           numberOfNeighboringMines: 0,
         })
       );
-
-    board[safeCell.row][safeCell.col] = {
-      ...board[safeCell.row][safeCell.col],
-      isRevealed: true,
-    };
 
     for (let i = 0; i < 10; i++) {
       let row;
@@ -160,9 +172,9 @@ function App() {
         }
       }
     }
-
     setBoard(board);
     setStatus(GameStatus.InProgress);
+    revealCell(board, safeCell.row, safeCell.col);
   };
 
   const revealSurroundingCells = useCallback(
@@ -202,11 +214,15 @@ function App() {
       <div>
         <h1>Minesweeper</h1>
         <div>
-          <button onClick={() => setStatus(GameStatus.Initial)}>Reset</button>
+          <button onClick={resetGame}>
+            {status === GameStatus.Won || status === GameStatus.Lost
+              ? "Retry"
+              : "Reset"}
+          </button>
         </div>
       </div>
       <div className="mx-auto flex flex-col items-center">
-        {status === "loading" && <div>Loading...</div>}
+        {status === GameStatus.Loading && <div>Loading...</div>}
         {status === GameStatus.Initial &&
           [0, 1, 2, 3, 4, 5, 6, 7].map((rowIndex) => (
             <div key={`row-${rowIndex}`} className="flex flex-row">
@@ -221,7 +237,9 @@ function App() {
               ))}
             </div>
           ))}
-        {status === "inProgress" &&
+        {(status === GameStatus.InProgress ||
+          status === GameStatus.Won ||
+          status === GameStatus.Lost) &&
           Array.isArray(board) &&
           board.map((row, rowIndex) => (
             <div key={`row-${rowIndex}`} className="flex flex-row">
@@ -230,6 +248,12 @@ function App() {
                   className="w-8 h-8 border select-none"
                   key={`row-${rowIndex}-col-${colIndex}`}
                   onClick={(event) => {
+                    if (
+                      status === GameStatus.Won ||
+                      status === GameStatus.Lost
+                    ) {
+                      return;
+                    }
                     event.preventDefault();
                     if (!cell.isFlagged && !cell.isRevealed) {
                       console.log(
@@ -239,6 +263,9 @@ function App() {
                     }
                   }}
                   onContextMenu={(event) => {
+                    if (status !== GameStatus.InProgress) {
+                      return;
+                    }
                     event.preventDefault();
                     console.log(
                       `Right click on row: ${rowIndex}, col: ${colIndex}`
@@ -246,6 +273,9 @@ function App() {
                     flagCell(board, rowIndex, colIndex);
                   }}
                   onDoubleClick={(event) => {
+                    if (status !== GameStatus.InProgress) {
+                      return;
+                    }
                     event.preventDefault();
                     if (!cell.isFlagged && cell.isRevealed) {
                       console.log(
@@ -266,6 +296,8 @@ function App() {
               ))}
             </div>
           ))}
+        {status === GameStatus.Won && <h1>You won!</h1>}
+        {status === GameStatus.Lost && <h1>You lost!</h1>}
       </div>
     </>
   );
