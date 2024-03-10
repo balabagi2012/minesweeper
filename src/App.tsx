@@ -48,12 +48,45 @@ function App() {
 
   const revealCell = useCallback(
     (board: GameBoard, row: number, col: number): void => {
+      if (board[row][col].isRevealed || board[row][col].isFlagged) {
+        return;
+      }
+
       const newBoard = [...board];
       newBoard[row][col] = {
         ...newBoard[row][col],
         isRevealed: true,
       };
-      setBoard(newBoard);
+      if (board[row][col].numberOfNeighboringMines === 0) {
+        const directions = [
+          [-1, -1],
+          [-1, 0],
+          [-1, 1],
+          [0, -1],
+          [0, 1],
+          [1, -1],
+          [1, 0],
+          [1, 1],
+        ];
+
+        for (let i = 0; i < directions.length; i++) {
+          const dir = directions[i];
+          const newRow = row + dir[0];
+          const newCol = col + dir[1];
+          if (
+            newRow >= 0 &&
+            newRow < 8 &&
+            newCol >= 0 &&
+            newCol < 8 &&
+            !board[newRow][newCol].isRevealed &&
+            !board[newRow][newCol].isFlagged
+          ) {
+            revealCell(board, newRow, newCol);
+          }
+        }
+      } else {
+        setBoard(newBoard);
+      }
     },
     []
   );
