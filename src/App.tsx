@@ -305,7 +305,9 @@ function App() {
                     : cell.isRevealed
                     ? cell.hasMine
                       ? "💣"
-                      : cell.numberOfNeighboringMines
+                      : cell.numberOfNeighboringMines > 0
+                      ? cell.numberOfNeighboringMines
+                      : ""
                     : "❓"}
                 </div>
               ))}
