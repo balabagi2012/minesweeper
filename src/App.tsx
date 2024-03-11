@@ -232,7 +232,8 @@ function App() {
                 ? "Retry"
                 : "Reset"}
             </button>
-            <p>Time: {timeCount}(s)</p>
+            <p>⏰ : {timeCount}(s)</p>
+            <p>🚩 : {flagCount}</p>
           </div>
         </div>
       </div>
