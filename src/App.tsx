@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import "./App.css";
 import { Coordinate, GameBoard, GameStatus } from "./types";
+import dayjs from "dayjs";
 
 function App() {
   const [board, setBoard] = useState<GameBoard>();
@@ -12,16 +12,6 @@ function App() {
   const [difficulty, setDifficulty] = useState<string>("simple");
 
   useEffect(() => {
-    if (difficulty === "simple") {
-      setMapSize(8);
-      setMineCount(10);
-    } else if (difficulty === "hard") {
-      setMapSize(16);
-      setMineCount(40);
-    }
-  }, [difficulty]);
-
-  useEffect(() => {
     if (status === GameStatus.Initial) {
       setTimeCount(0);
     } else if (status === GameStatus.InProgress) {
@@ -31,6 +21,17 @@ function App() {
       return () => clearInterval(interval);
     }
   }, [status]);
+
+  useEffect(() => {
+    if (difficulty === "simple") {
+      setMapSize(8);
+      setMineCount(10);
+    } else if (difficulty === "hard") {
+      setMapSize(16);
+      setMineCount(40);
+    }
+    resetGame();
+  }, [difficulty]);
 
   const resetGame = () => {
     setBoard(undefined);
@@ -235,9 +236,9 @@ function App() {
   );
 
   return (
-    <>
-      <div className="w-full h-full">
-        <div className="flex flex-row justify-center items-center mb-4">
+    <div className="w-full h-full">
+      <div className="w-full">
+        <div className="flex flex-row justify-center items-center p-3 border-b-2 shadow-sm">
           <div className="flex flex-row justify-center items-center">
             <h1>Minesweeper</h1>
           </div>
@@ -255,12 +256,20 @@ function App() {
               <option value="simple">8x8 with 10 mines</option>
               <option value="hard">16x16 with 40 mines</option>
             </select>
-            <p className="p-2 border">🚩 : {mineCount - flagCount}</p>
-            <p className="p-2 border">⏰ : {timeCount}(s)</p>
+            <p className="p-2 border">
+              <span className="mr-1">🚩</span> {mineCount - flagCount}
+            </p>
+            <p className="p-2 border">
+              <span className="mr-2">⏰</span>
+              {dayjs()
+                .startOf("day")
+                .add(timeCount, "second")
+                .format("HH:mm:ss")}
+            </p>
           </div>
         </div>
       </div>
-      <div className="mx-auto flex flex-col items-center">
+      <div className="h-full flex-1 flex flex-col justify-center items-center">
         {status === GameStatus.Loading && <div>Loading...</div>}
         {status === GameStatus.Initial &&
           Array(mapSize)
@@ -271,7 +280,7 @@ function App() {
                   .fill(0)
                   .map((_col, colIndex) => (
                     <div
-                      className="w-8 h-8 border"
+                      className="w-8 h-8 border flex flex-row justify-center items-center select-none"
                       key={`row-${rowIndex}-col-${colIndex}`}
                       onClick={() =>
                         initializeGameBoard({ row: rowIndex, col: colIndex })
@@ -288,7 +297,7 @@ function App() {
             <div key={`row-${rowIndex}`} className="flex flex-row">
               {row.map((cell, colIndex) => (
                 <div
-                  className="w-8 h-8 border select-none"
+                  className="w-8 h-8 border flex flex-row justify-center items-center select-none"
                   key={`row-${rowIndex}-col-${colIndex}`}
                   onClick={(event) => {
                     if (
@@ -344,7 +353,7 @@ function App() {
         {status === GameStatus.Won && <h1>You won!</h1>}
         {status === GameStatus.Lost && <h1>You lost!</h1>}
       </div>
-    </>
+    </div>
   );
 }
 
