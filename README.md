@@ -2,6 +2,12 @@
 
 This is a Minesweeper game built with React, TypeScript, and Vite.
 
+### Landing Page
+![image](https://github.com/balabagi2012/minesweeper/blob/development/demo/initial.jpg?raw=true)
+
+### Game Page
+![image](https://github.com/balabagi2012/minesweeper/blob/development/demo/inProgress.jpg?raw=true)
+
 ## Project Setup
 
 This project uses Vite as a build tool. To get started, you need to have Node.js installed on your machine. After that, you can clone this repository and install the dependencies.
