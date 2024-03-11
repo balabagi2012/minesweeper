@@ -32,3 +32,6 @@ The rules of the game are the same as the classic Minesweeper game:
 
 ## Project Structure
 The main game logic is in the App.tsx file. This file contains the React component that renders the game board and handles user interactions.
+
+## Demo
+The demo site has deployed to Vercel, and you can visit at https://minesweeper-chi-woad.vercel.app/.
