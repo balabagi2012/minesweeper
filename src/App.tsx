@@ -237,39 +237,39 @@ function App() {
 
   return (
     <div className="w-full h-full">
-      <div className="w-full">
-        <div className="flex flex-row justify-center items-center p-3 border-b-2 shadow-sm">
-          <div className="flex flex-row justify-center items-center">
-            <h1>Minesweeper</h1>
-          </div>
-          <div className="ml-auto flex flex-row justify-center items-center gap-x-3">
-            <button onClick={resetGame} className="ml-2 border p-2">
+      <header className="w-full h-16 border-b-1 shadow-sm flex flex-row justify-center items-center px-10">
+        <div className="flex flex-row justify-center items-center gap-x-2">
+          <img alt="logo" src="/logo.svg" className="w-7 h-auto"></img>
+          <h1 className="text-[#363C54] text-xl font-extrabold italic">
+            Minesweeper
+          </h1>
+        </div>
+        <div className="ml-auto flex flex-row justify-center items-center gap-x-3">
+          {status !== GameStatus.Initial && status !== GameStatus.Loading && (
+            <button onClick={resetGame} className="ml-2 border px-2 py-1">
               {status === GameStatus.Won || status === GameStatus.Lost
                 ? "Retry"
                 : "Reset"}
             </button>
-            <select
-              className="p-2 border"
-              value={difficulty}
-              onChange={(event) => setDifficulty(event.target.value)}
-            >
-              <option value="simple">8x8 with 10 mines</option>
-              <option value="hard">16x16 with 40 mines</option>
-            </select>
-            <p className="p-2 border">
-              <span className="mr-1">🚩</span> {mineCount - flagCount}
-            </p>
-            <p className="p-2 border">
-              <span className="mr-2">⏰</span>
-              {dayjs()
-                .startOf("day")
-                .add(timeCount, "second")
-                .format("HH:mm:ss")}
-            </p>
-          </div>
+          )}
+          <select
+            className="px-2 py-1 border"
+            value={difficulty}
+            onChange={(event) => setDifficulty(event.target.value)}
+          >
+            <option value="simple">8x8 with 10 mines</option>
+            <option value="hard">16x16 with 40 mines</option>
+          </select>
+          <p className="px-2 py-1 border">
+            <span className="mr-1">🚩</span> {mineCount - flagCount}
+          </p>
+          <p className="p-2 border">
+            <span className="mr-2">⏰</span>
+            {dayjs().startOf("day").add(timeCount, "second").format("HH:mm:ss")}
+          </p>
         </div>
-      </div>
-      <div className="h-full flex-1 flex flex-col justify-center items-center">
+      </header>
+      <div className="h-full flex-1 flex flex-col justify-center items-center bg-[#f4f7fb] bg-[url('/bg.svg')] bg-no-repeat bg-cover">
         {status === GameStatus.Loading && <div>Loading...</div>}
         {status === GameStatus.Initial &&
           Array(mapSize)
@@ -280,7 +280,7 @@ function App() {
                   .fill(0)
                   .map((_col, colIndex) => (
                     <div
-                      className="w-8 h-8 border flex flex-row justify-center items-center select-none"
+                      className="w-10 h-10 border border-gray flex flex-row justify-center items-center select-none bg-white hover:bg-[#928683] shadow"
                       key={`row-${rowIndex}-col-${colIndex}`}
                       onClick={() =>
                         initializeGameBoard({ row: rowIndex, col: colIndex })
@@ -297,7 +297,11 @@ function App() {
             <div key={`row-${rowIndex}`} className="flex flex-row">
               {row.map((cell, colIndex) => (
                 <div
-                  className="w-8 h-8 border flex flex-row justify-center items-center select-none"
+                  className={`w-10 h-10 border border-gray flex flex-row justify-center items-center select-none ${
+                    cell.isRevealed || cell.isFlagged
+                      ? "bg-white"
+                      : "bg-[#B7B7B7]"
+                  } hover:bg-[#928683] text-[#363C54]`}
                   key={`row-${rowIndex}-col-${colIndex}`}
                   onClick={(event) => {
                     if (
@@ -339,13 +343,11 @@ function App() {
                 >
                   {cell.isFlagged
                     ? "🚩"
-                    : cell.isRevealed
-                    ? cell.hasMine
-                      ? "💣"
-                      : cell.numberOfNeighboringMines > 0
-                      ? cell.numberOfNeighboringMines
-                      : ""
-                    : "❓"}
+                    : cell.isRevealed && cell.hasMine
+                    ? "💣"
+                    : cell.isRevealed && cell.numberOfNeighboringMines > 0
+                    ? cell.numberOfNeighboringMines
+                    : ""}
                 </div>
               ))}
             </div>
