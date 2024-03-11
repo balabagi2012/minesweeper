@@ -5,8 +5,21 @@ import { Coordinate, GameBoard, GameStatus } from "./types";
 function App() {
   const [board, setBoard] = useState<GameBoard>();
   const [status, setStatus] = useState<GameStatus>(GameStatus.Initial);
+  const [mapSize, setMapSize] = useState<number>(8);
+  const [mineCount, setMineCount] = useState<number>(10);
   const [flagCount, setFlagCount] = useState(0);
   const [timeCount, setTimeCount] = useState(0);
+  const [difficulty, setDifficulty] = useState<string>("simple");
+
+  useEffect(() => {
+    if (difficulty === "simple") {
+      setMapSize(8);
+      setMineCount(10);
+    } else if (difficulty === "hard") {
+      setMapSize(16);
+      setMineCount(40);
+    }
+  }, [difficulty]);
 
   useEffect(() => {
     if (status === GameStatus.Initial) {
@@ -53,9 +66,9 @@ function App() {
       const newCol = col + dir[1];
       if (
         newRow >= 0 &&
-        newRow < 8 &&
+        newRow < mapSize &&
         newCol >= 0 &&
-        newCol < 8 &&
+        newCol < mapSize &&
         board[newRow][newCol].hasMine
       ) {
         count++;
@@ -101,9 +114,9 @@ function App() {
           const newCol = col + dir[1];
           if (
             newRow >= 0 &&
-            newRow < 8 &&
+            newRow < mapSize &&
             newCol >= 0 &&
-            newCol < 8 &&
+            newCol < mapSize &&
             !board[newRow][newCol].isRevealed &&
             !board[newRow][newCol].isFlagged
           ) {
@@ -120,7 +133,7 @@ function App() {
         }
       }
     },
-    []
+    [mapSize]
   );
 
   const flagCell = useCallback(
@@ -128,7 +141,7 @@ function App() {
       const newBoard = [...board];
       const newIsFlagged = !board[row][col].isFlagged;
       const newIsFlaggedCount = newIsFlagged ? 1 : -1;
-      if (newIsFlagged && flagCount < 10) {
+      if (newIsFlagged && flagCount < mineCount) {
         setFlagCount(flagCount + newIsFlaggedCount);
       } else if (!newIsFlagged && flagCount > 0) {
         setFlagCount(flagCount + newIsFlaggedCount);
@@ -141,15 +154,15 @@ function App() {
       };
       setBoard(newBoard);
     },
-    [flagCount]
+    [flagCount, mineCount]
   );
 
   const initializeGameBoard = (safeCell: Coordinate): void => {
     setStatus(GameStatus.Loading);
-    const board: GameBoard = Array(8)
+    const board: GameBoard = Array(mapSize)
       .fill(null)
       .map(() =>
-        Array(8).fill({
+        Array(mapSize).fill({
           hasMine: false,
           isRevealed: false,
           isFlagged: false,
@@ -157,13 +170,13 @@ function App() {
         })
       );
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < mineCount; i++) {
       let row;
       let col;
 
       do {
-        row = Math.floor(Math.random() * 8);
-        col = Math.floor(Math.random() * 8);
+        row = Math.floor(Math.random() * mapSize);
+        col = Math.floor(Math.random() * mapSize);
       } while (
         board[row][col].hasMine ||
         (row === safeCell.row && col === safeCell.col)
@@ -174,8 +187,8 @@ function App() {
       };
     }
 
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 8; col++) {
+    for (let row = 0; row < mapSize; row++) {
+      for (let col = 0; col < mapSize; col++) {
         if (!board[row][col].hasMine) {
           board[row][col] = {
             ...board[row][col],
@@ -208,9 +221,9 @@ function App() {
         const newCol = col + dir[1];
         if (
           newRow >= 0 &&
-          newRow < 8 &&
+          newRow < mapSize &&
           newCol >= 0 &&
-          newCol < 8 &&
+          newCol < mapSize &&
           !board[newRow][newCol].isRevealed &&
           !board[newRow][newCol].isFlagged
         ) {
@@ -218,41 +231,55 @@ function App() {
         }
       }
     },
-    [revealCell]
+    [revealCell, mapSize]
   );
 
   return (
     <>
-      <div>
-        <div className="flex flex-row justify-center items-center">
-          <h1>Minesweeper</h1>
-          <div className="ml-auto">
-            <button onClick={resetGame}>
+      <div className="w-full h-full">
+        <div className="flex flex-row justify-center items-center mb-4">
+          <div className="flex flex-row justify-center items-center">
+            <h1>Minesweeper</h1>
+          </div>
+          <div className="ml-auto flex flex-row justify-center items-center gap-x-3">
+            <button onClick={resetGame} className="ml-2 border p-2">
               {status === GameStatus.Won || status === GameStatus.Lost
                 ? "Retry"
                 : "Reset"}
             </button>
-            <p>⏰ : {timeCount}(s)</p>
-            <p>🚩 : {flagCount}</p>
+            <select
+              className="p-2 border"
+              value={difficulty}
+              onChange={(event) => setDifficulty(event.target.value)}
+            >
+              <option value="simple">8x8 with 10 mines</option>
+              <option value="hard">16x16 with 40 mines</option>
+            </select>
+            <p className="p-2 border">🚩 : {mineCount - flagCount}</p>
+            <p className="p-2 border">⏰ : {timeCount}(s)</p>
           </div>
         </div>
       </div>
       <div className="mx-auto flex flex-col items-center">
         {status === GameStatus.Loading && <div>Loading...</div>}
         {status === GameStatus.Initial &&
-          [0, 1, 2, 3, 4, 5, 6, 7].map((rowIndex) => (
-            <div key={`row-${rowIndex}`} className="flex flex-row">
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((colIndex) => (
-                <div
-                  className="w-8 h-8 border"
-                  key={`row-${rowIndex}-col-${colIndex}`}
-                  onClick={() =>
-                    initializeGameBoard({ row: rowIndex, col: colIndex })
-                  }
-                ></div>
-              ))}
-            </div>
-          ))}
+          Array(mapSize)
+            .fill(0)
+            .map((_row, rowIndex) => (
+              <div key={`row-${rowIndex}`} className="flex flex-row">
+                {Array(mapSize)
+                  .fill(0)
+                  .map((_col, colIndex) => (
+                    <div
+                      className="w-8 h-8 border"
+                      key={`row-${rowIndex}-col-${colIndex}`}
+                      onClick={() =>
+                        initializeGameBoard({ row: rowIndex, col: colIndex })
+                      }
+                    ></div>
+                  ))}
+              </div>
+            ))}
         {(status === GameStatus.InProgress ||
           status === GameStatus.Won ||
           status === GameStatus.Lost) &&
