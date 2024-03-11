@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import { Coordinate, GameBoard, GameStatus } from "./types";
 
@@ -6,6 +6,18 @@ function App() {
   const [board, setBoard] = useState<GameBoard>();
   const [status, setStatus] = useState<GameStatus>(GameStatus.Initial);
   const [flagCount, setFlagCount] = useState(0);
+  const [timeCount, setTimeCount] = useState(0);
+
+  useEffect(() => {
+    if (status === GameStatus.Initial) {
+      setTimeCount(0);
+    } else if (status === GameStatus.InProgress) {
+      const interval = setInterval(() => {
+        setTimeCount((timeCount) => timeCount + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [status]);
 
   const resetGame = () => {
     setBoard(undefined);
@@ -212,13 +224,16 @@ function App() {
   return (
     <>
       <div>
-        <h1>Minesweeper</h1>
-        <div>
-          <button onClick={resetGame}>
-            {status === GameStatus.Won || status === GameStatus.Lost
-              ? "Retry"
-              : "Reset"}
-          </button>
+        <div className="flex flex-row justify-center items-center">
+          <h1>Minesweeper</h1>
+          <div className="ml-auto">
+            <button onClick={resetGame}>
+              {status === GameStatus.Won || status === GameStatus.Lost
+                ? "Retry"
+                : "Reset"}
+            </button>
+            <p>Time: {timeCount}(s)</p>
+          </div>
         </div>
       </div>
       <div className="mx-auto flex flex-col items-center">
